@@ -102,7 +102,7 @@ Data: 17/04/2023
 Horário: 20:00
 
 Título: Culto de Jovens
-Pregador: Missionária Ana
+Pregador: Ana
 Data: 18/04/2023
 Horário: 19:30
 ```
@@ -137,6 +137,7 @@ Na primeira execução, o aplicativo abrirá uma janela do navegador solicitando
 
 ## Melhorias Futuras
 
+- Descrição e títulos personalizados
 - Interface gráfica (GUI)
 - Suporte para múltiplos canais
 - Notificações por e-mail ou WhatsApp
