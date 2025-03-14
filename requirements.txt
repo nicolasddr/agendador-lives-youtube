@@ -1,0 +1,7 @@
+# Dependências para integração com a API do YouTube
+google-auth>=2.15.0
+google-auth-oauthlib>=0.7.1
+google-api-python-client>=2.70.0
+
+# Outras dependências
+python-dotenv>=1.0.0  # Para gerenciar variáveis de ambiente

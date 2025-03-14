@@ -1,0 +1,18 @@
+# Arquivos gerados pelo Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Arquivos de autenticação
+client_secret.json
+token.pickle
+.env
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Diretórios de exemplo
+covers/
+capas/
