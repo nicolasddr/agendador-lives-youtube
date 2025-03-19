@@ -12,6 +12,8 @@ Este aplicativo permite agendar múltiplas transmissões no YouTube de forma efi
 - Exibição dos links gerados para cada transmissão
 - Opção para salvar os resultados em um arquivo de texto
 - **Integração com a API oficial do YouTube**
+- **Personalização de descrições** para as transmissões
+- **Personalização de títulos** usando placeholders
 
 ## Requisitos
 
@@ -111,6 +113,33 @@ Após colar o texto, pressione Enter e depois:
 - No Mac/Linux: pressione Ctrl+D
 - No Windows: pressione Ctrl+Z seguido de Enter
 
+### Personalização de Títulos
+
+O aplicativo permite definir um modelo personalizado para os títulos das transmissões, usando placeholders entre chaves `{}` para os dados inseridos:
+
+- `{titulo}` - O título original da transmissão
+- `{pregador}` - Nome do pregador
+- `{data}` - Data da transmissão
+- `{horario}` - Horário da transmissão
+
+**Exemplo de modelo:**
+```
+🔴 CULTO AO VIVO: {titulo} | {pregador} | {data}
+```
+
+Com este modelo, uma transmissão com título "Celebração da Fé", pregador "Pr. João" e data "25/03/2023", gerará o título formatado:
+```
+🔴 CULTO AO VIVO: Celebração da Fé | Pr. João | 25/03/2023
+```
+
+O aplicativo mostra uma prévia do título formatado para cada transmissão e permite ajustar o modelo a qualquer momento antes do agendamento.
+
+### Personalização de Descrições
+
+O aplicativo permite definir um texto personalizado que será usado como descrição para todas as transmissões. Esta descrição substitui a descrição padrão e pode conter informações detalhadas sobre a transmissão, contatos da igreja, links para redes sociais, etc.
+
+O texto da descrição é solicitado no início do processo e aplicado a todas as transmissões agendadas.
+
 ### Imagens de Capa
 
 Após inserir os dados das transmissões, o aplicativo solicitará o nome da pasta que contém as imagens de capa. As imagens devem estar na mesma ordem das transmissões inseridas.
@@ -134,12 +163,12 @@ Na primeira execução, o aplicativo abrirá uma janela do navegador solicitando
 - O aplicativo agora utiliza a API oficial do YouTube para agendar transmissões.
 - As credenciais de autenticação são armazenadas localmente no arquivo `token.pickle`.
 - Certifique-se de que a conta do Google utilizada tenha permissões para gerenciar o canal do YouTube desejado.
+- O fuso horário considerado é UTC-4 (horário do Brasil).
 
 ## Melhorias Futuras
 
-- Descrição e títulos personalizados
 - Interface gráfica (GUI)
 - Suporte para múltiplos canais
 - Notificações por e-mail ou WhatsApp
 - Geração de relatórios detalhados
-- Agendamento de transmissões recorrentes 
+- Agendamento de transmissões recorrentes

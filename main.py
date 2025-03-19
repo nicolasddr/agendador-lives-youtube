@@ -20,6 +20,39 @@ load_dotenv()
 # Nome da organização (usado na descrição)
 ORGANIZATION_NAME = os.getenv('ORGANIZATION_NAME', 'Igreja')
 
+def formatar_titulo_personalizado(modelo: str, dados: Dict[str, str]) -> str:
+    """
+    Formata o título da transmissão com base no modelo personalizado.
+    
+    Args:
+        modelo: String com placeholders entre chaves, ex: "{titulo} - {pregador} - {data}"
+        dados: Dicionário com os dados da transmissão
+        
+    Returns:
+        String formatada com os dados inseridos no modelo
+    """
+    # Define um modelo padrão caso o usuário não forneça um
+    if not modelo:
+        modelo = "{titulo} - {pregador} - {data} - {horario}"
+    
+    # Verifica se todos os placeholders no modelo têm correspondência nos dados
+    import re
+    placeholders = re.findall(r'\{(\w+)\}', modelo)
+    
+    # Verifica se todos os placeholders existem nos dados
+    placeholders_invalidos = [p for p in placeholders if p not in dados]
+    if placeholders_invalidos:
+        raise ValueError(f"Os seguintes placeholders não têm correspondência: {', '.join(placeholders_invalidos)}")
+    
+    # Formata o título substituindo os placeholders pelos dados
+    titulo_formatado = modelo
+    for campo, valor in dados.items():
+        placeholder = "{" + campo + "}"
+        if placeholder in titulo_formatado:
+            titulo_formatado = titulo_formatado.replace(placeholder, valor)
+    
+    return titulo_formatado
+
 def coletar_dados_transmissoes() -> List[Dict[str, str]]:
     """
     Coleta os dados das transmissões via terminal.
@@ -43,6 +76,14 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
     print("Informe um texto personalizado que será adicionado à descrição de todas as transmissões (opcional):")
     print("Pressione Enter para pular ou digite o texto:")
     texto_descricao = input().strip()
+    
+    # Coleta do modelo personalizado para o título (comum para todas as transmissões)
+    print("\n=== MODELO PERSONALIZADO PARA TÍTULO ===")
+    print("Informe um modelo para o título das transmissões (opcional):")
+    print("Use {titulo}, {pregador}, {data}, {horario} como placeholders.")
+    print("Exemplo: 🔴 CULTO AO VIVO: {titulo} | {pregador} | {data}")
+    print("Pressione Enter para usar o formato padrão ({titulo} - {pregador} - {data} - {horario}):")
+    modelo_titulo = input().strip()
     
     if modo == "1":
         # Modo interativo (original)
@@ -72,8 +113,28 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
                 "data": data,
                 "horario": horario,
                 "texto_descricao": texto_descricao,  # Adiciona o texto de descrição
+                "modelo_titulo": modelo_titulo,  # Adiciona o modelo de título
                 "link": None  # Será preenchido após o agendamento
             }
+            
+            # Previewing formatted title
+            try:
+                titulo_formatado = formatar_titulo_personalizado(modelo_titulo, transmissao)
+                print(f"\nPrévia do título formatado:")
+                print(f">> {titulo_formatado}")
+                
+                confirmacao = input("O título está correto? (s/n): ").lower()
+                if confirmacao != 's':
+                    print("Você pode editar os dados acima ou ajustar o modelo de título geral mais tarde.")
+                    continue
+                
+                # Adiciona o título formatado
+                transmissao["titulo_formatado"] = titulo_formatado
+                
+            except ValueError as e:
+                print(f"Erro ao formatar título: {str(e)}")
+                print("Por favor, verifique o modelo de título.")
+                continue
             
             transmissoes.append(transmissao)
             print("Transmissão adicionada. Pressione Enter duas vezes para finalizar ou continue com a próxima.")
@@ -132,6 +193,16 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
             campos_obrigatorios = ["titulo", "pregador", "data", "horario"]
             if all(campo in dados for campo in campos_obrigatorios):
                 dados["texto_descricao"] = texto_descricao  # Adiciona o texto de descrição
+                dados["modelo_titulo"] = modelo_titulo  # Adiciona o modelo de título
+                
+                # Tenta formatar o título
+                try:
+                    dados["titulo_formatado"] = formatar_titulo_personalizado(modelo_titulo, dados)
+                except ValueError as e:
+                    print(f"Erro ao formatar título para '{dados['titulo']}': {str(e)}")
+                    print("O título original será usado.")
+                    dados["titulo_formatado"] = dados["titulo"]
+                
                 dados["link"] = None  # Será preenchido após o agendamento
                 transmissoes.append(dados)
             else:
@@ -144,11 +215,36 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
         print("Opção inválida. Usando modo interativo por padrão.")
         return coletar_dados_transmissoes()
     
+    # Revisa os títulos formatados
+    if transmissoes:
+        print("\n=== REVISÃO DOS TÍTULOS FORMATADOS ===")
+        for i, t in enumerate(transmissoes):
+            print(f"{i+1}. {t['titulo_formatado']}")
+        
+        confirmacao = input("\nOs títulos formatados estão corretos? (s/n): ").lower()
+        if confirmacao != 's':
+            # Permite alteração do modelo de título
+            print("\nDigite um novo modelo de título:")
+            novo_modelo = input().strip()
+            if novo_modelo:
+                # Aplica o novo modelo a todas as transmissões
+                for t in transmissoes:
+                    try:
+                        t["modelo_titulo"] = novo_modelo
+                        t["titulo_formatado"] = formatar_titulo_personalizado(novo_modelo, t)
+                    except ValueError as e:
+                        print(f"Erro ao aplicar novo modelo para '{t['titulo']}': {str(e)}")
+                
+                # Exibe os títulos atualizados
+                print("\nTítulos atualizados:")
+                for i, t in enumerate(transmissoes):
+                    print(f"{i+1}. {t['titulo_formatado']}")
+    
     # Exibe resumo das transmissões coletadas
     if transmissoes:
         print(f"\nForam coletadas {len(transmissoes)} transmissões:")
         for i, t in enumerate(transmissoes):
-            print(f"{i+1}. {t['titulo']} - {t['data']} {t['horario']}")
+            print(f"{i+1}. {t['titulo_formatado']} - {t['data']} {t['horario']}")
     else:
         print("\nNenhuma transmissão foi coletada.")
     
@@ -179,7 +275,7 @@ def obter_arquivos_capa(transmissoes: List[Dict[str, str]]) -> Optional[List[str
     # Exibe como os arquivos serão associados às transmissões
     print("\nAssociação de capas às transmissões:")
     for i, (arquivo, transmissao) in enumerate(zip(arquivos, transmissoes)):
-        print(f"{i+1}. {transmissao['titulo']} -> {arquivo}")
+        print(f"{i+1}. {transmissao['titulo_formatado']} -> {arquivo}")
     
     confirmacao = input("\nConfirma a associação acima? (s/n): ").lower()
     if confirmacao != 's':
@@ -211,13 +307,13 @@ def agendar_transmissoes(transmissoes: List[Dict[str, str]], capas: List[str], n
     # Agenda cada transmissão
     for i, (transmissao, capa) in enumerate(zip(transmissoes, capas)):
         print(f"\nAgendando transmissão {i+1}/{len(transmissoes)}:")
-        print(f"  Título: {transmissao['titulo']}")
+        print(f"  Título: {transmissao['titulo_formatado']}")
         print(f"  Pregador: {transmissao['pregador']}")
         print(f"  Data/Horário: {transmissao['data']} às {transmissao['horario']}")
         print(f"  Capa: {os.path.basename(capa)}")
         
         # Prepara os dados para a API
-        titulo = transmissao['titulo']
+        titulo = transmissao['titulo_formatado']
         descricao = formatar_descricao(
             transmissao['pregador'], 
             transmissao['data'], 
@@ -275,7 +371,7 @@ def atualizar_status_transmissoes(transmissoes: List[Dict[str, str]], publico: b
     # Atualiza cada transmissão
     for i, transmissao in enumerate(transmissoes):
         print(f"\nAtualizando transmissão {i+1}/{len(transmissoes)}:")
-        print(f"  Título: {transmissao['titulo']}")
+        print(f"  Título: {transmissao['titulo_formatado']}")
         print(f"  Link: {transmissao['link']}")
         
         # Extrai o ID do vídeo do link
@@ -309,7 +405,7 @@ def exibir_resultados(transmissoes: List[Dict[str, str]]) -> None:
     
     for i, transmissao in enumerate(transmissoes):
         print(f"\nTransmissão #{i+1}")
-        print(f"Título: {transmissao['titulo']}")
+        print(f"Título: {transmissao['titulo_formatado']}")
         print(f"Pregador: {transmissao['pregador']}")
         print(f"Data: {transmissao['data']}")
         print(f"Horário: {transmissao['horario']}")
@@ -327,7 +423,7 @@ def salvar_resultados(transmissoes: List[Dict[str, str]], nome_arquivo: str = "r
             
             for i, transmissao in enumerate(transmissoes):
                 arquivo.write(f"Transmissão #{i+1}\n")
-                arquivo.write(f"Título: {transmissao['titulo']}\n")
+                arquivo.write(f"Título: {transmissao['titulo_formatado']}\n")
                 arquivo.write(f"Pregador: {transmissao['pregador']}\n")
                 arquivo.write(f"Data: {transmissao['data']}\n")
                 arquivo.write(f"Horário: {transmissao['horario']}\n")
