@@ -191,29 +191,40 @@ def atualizar_status_transmissao(
     except Exception as e:
         return False, f"Erro ao atualizar status da transmissão: {str(e)}"
 
-def formatar_descricao(pregador: str, data: str, horario: str) -> str:
+def formatar_descricao(pregador: str, data: str, horario: str, texto_personalizado: str = "") -> str:
     """
-    Formata a descrição padrão para a transmissão.
+    Retorna o texto personalizado como descrição da transmissão.
+    Se nenhum texto personalizado for fornecido, retorna uma string vazia.
+    
+    Args:
+        pregador: Nome do pregador (não utilizado na descrição)
+        data: Data da transmissão (não utilizado na descrição)
+        horario: Horário da transmissão (não utilizado na descrição)
+        texto_personalizado: Texto personalizado para usar como descrição
     """
-    return f"""Transmissão ao vivo da Igreja.
-
-Pregador: {pregador}
-Data: {data}
-Horário: {horario}
-
-Seja bem-vindo à nossa transmissão! Compartilhe com seus amigos e familiares.
-"""
+    # Retorna apenas o texto personalizado como descrição
+    return texto_personalizado
 
 def converter_data_hora(data_str: str, hora_str: str) -> datetime:
     """
     Converte strings de data e hora para um objeto datetime.
+    Considera o fuso horário do Brasil (UTC-4).
     
     Args:
         data_str: Data no formato DD/MM/AAAA
         hora_str: Hora no formato HH:MM
         
     Returns:
-        Objeto datetime
+        Objeto datetime já com o ajuste para UTC
     """
+    from datetime import timedelta
+    
+    # Converte para datetime no horário local
     data_completa = f"{data_str} {hora_str}"
-    return datetime.strptime(data_completa, "%d/%m/%Y %H:%M") 
+    data_hora_local = datetime.strptime(data_completa, "%d/%m/%Y %H:%M")
+    
+    # Ajusta o fuso horário para UTC (Brasil é UTC-4)
+    fuso_horario_brasil = -4  # horas
+    data_hora_utc = data_hora_local + timedelta(hours=-fuso_horario_brasil)
+    
+    return data_hora_utc 

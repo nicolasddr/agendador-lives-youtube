@@ -38,6 +38,12 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
     
     modo = input("\nEscolha uma opção (1 ou 2): ").strip()
     
+    # Coleta do texto personalizado para descrição (comum para todas as transmissões)
+    print("\n=== TEXTO PERSONALIZADO PARA DESCRIÇÃO ===")
+    print("Informe um texto personalizado que será adicionado à descrição de todas as transmissões (opcional):")
+    print("Pressione Enter para pular ou digite o texto:")
+    texto_descricao = input().strip()
+    
     if modo == "1":
         # Modo interativo (original)
         print("\nInsira os dados das transmissões (pressione Enter duas vezes para finalizar):")
@@ -65,6 +71,7 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
                 "pregador": pregador,
                 "data": data,
                 "horario": horario,
+                "texto_descricao": texto_descricao,  # Adiciona o texto de descrição
                 "link": None  # Será preenchido após o agendamento
             }
             
@@ -124,6 +131,7 @@ def coletar_dados_transmissoes() -> List[Dict[str, str]]:
             # Validação básica
             campos_obrigatorios = ["titulo", "pregador", "data", "horario"]
             if all(campo in dados for campo in campos_obrigatorios):
+                dados["texto_descricao"] = texto_descricao  # Adiciona o texto de descrição
                 dados["link"] = None  # Será preenchido após o agendamento
                 transmissoes.append(dados)
             else:
@@ -213,7 +221,8 @@ def agendar_transmissoes(transmissoes: List[Dict[str, str]], capas: List[str], n
         descricao = formatar_descricao(
             transmissao['pregador'], 
             transmissao['data'], 
-            transmissao['horario']
+            transmissao['horario'],
+            transmissao.get('texto_descricao', '')  # Passa o texto personalizado, se existir
         )
         data_inicio = converter_data_hora(
             transmissao['data'], 
